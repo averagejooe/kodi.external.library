@@ -3,67 +3,34 @@
 [![Check addon](https://github.com/romanvm/kodi.external.library/actions/workflows/check-addon.yml/badge.svg)](https://github.com/romanvm/kodi.external.library/actions/workflows/check-addon.yml)
 
 This addon allows to browse and play videofiles from a medialibrary on a remote Kodi instance with syncing playback status.
+Building on the original author's work, this fork adds features developed entirely through AI-assisted “vibe coding,” alongside smaller refinements aimed at making browsing faster and the experience feel as native to Kodi as possible — particularly on lower-powered devices like the Fire TV Stick 4K. The library listing and playback workflow have also been tested with Google Drive and OneDrive add-ons to help ensure compatibility with cloud-hosted media.
 
-## Motivation
+## Features
 
-Currently, Kodi supports 2 ways of accessing a common medialibrary with syncing playback status:
+### Fast Browsing
+- **Fast local browsing** — Browse Movies and TV Shows from a local library copy, reducing repeated network requests to the remote Kodi host.
+- **Recently Added TV Shows** — Quickly access recently added TV shows from a dedicated menu entry.
+- **On-demand library building** — Build the local library copy directly from the Movies or TV Shows menu when needed.
 
-- Files on network shares with the common MySQL/MariaDB database.
-- UPnP/DLNA access.
+### Smart Playlists
+- **Remote Smart Playlists** — Browse and open Smart Playlists from your remote Kodi library.
+- **Pin to root menu** — Pin frequently used playlists to the root menu for quick access.
+- **Configurable pagination** — Browse large playlists in manageable pages, customize the page size, or disable pagination entirely.
+- **Rich playlist details** — Display posters, plots, and other metadata for playlist entries using the local library copy, with an option to use a lighter view.
 
-However, setting up a common MySQL/MariaDB database require some technical knowledge.
-Also all Kodi instances that access this database must be of the same major version.
-On the other hand, UPnP/DLNA access does not support full medialibrary information
-and introduces unnecessary overhead of streaming if files are located on network shares.
+### Flexible Interface
+- **Native Kodi library views** — Use Kodi's familiar library layouts, or switch to the generic file view.
+- **Sorting and metadata** — Access supported sorting options and full item information when browsing your library.
 
-This plugin provides an alternative way of accessing a remote Kodi medialibrary and
-has the following advantages:
+### Watch Tracking
+- **Automatic watch-state synchronization** — Update watched status and last-played information on the remote Kodi host after playback, including when rewatching previously watched episodes.
+- **No forced list refresh after playback** — Lists are intentionally left unchanged when playback ends, avoiding unnecessary delays. Updated watch information appears the next time the list is opened.
 
-- It's easy to configure. Just enable Web server and Application control in the target Kodi instance
-  and set host, port, login and password in the plugin to access it.
-- It supports all medialibrary information that can be retrieved and set via JSON-RPC and Python APIs.
-- Client and "server" Kodi instances can be of different major versions (but not too different).
-
-By default, files are streamed from the built-in HTTP server of a remote Kodi instance,
-but the plugin also supports playing files directly from network shares if the remote Kodi uses 
-network shares as media sources.
-
-## Known issues
-
-- "Mark as watched/unwatched" item appears twice in the context menu but only
-  the colored one actually works. The other is no-op.
-- The plugin also appears in "Programs" section but just displays an information pop-up
-  if launched from there.
-- Kodi built-in web-server is not very powerful and may have troubles streaming high-bitrate videofiles,
-  especially if the "source" Kodi is being used for something else at the same time.
-  It is recommended to store your files on network shares.
-
-Those are Kodi limitations.
-
-## Installation
-
-The plugin can be installed from the official Kodi addon repository -> **Video add-ons** section.
-
-## Setup
-
-### Remote Kodi
-
-In "**Settings**" > "**Services**" > "**Control**" section enable the built-in web-server and remote control
-as shown on the screenshot.
-
-![Control Section](https://raw.githubusercontent.com/romanvm/kodi.external.library/master/screenshots/kodi-webserver-settings.png)
-
-### Plugin Settings
-
-In the first section ("**Access**") enter the host address of your remote Kodi instance.
-Also provide the port number, login and password configured on the previous step.
-
-![Access Settings](https://raw.githubusercontent.com/romanvm/kodi.external.library/master/screenshots/external-library-client-access.png)
 
 ## Credits
 
 The addon icon was borrowed from [Aeon Nox 5: SiLVO](https://github.com/MikeSiLVO/Aeon-Nox-SiLVO) skin.
 
 ## License
-
+This project retains the GNU General Public License v3.0 (GPL-3.0). See LICENSE for the full license text.
 [GPL v.3](https://www.gnu.org/licenses/gpl-3.0.html)
