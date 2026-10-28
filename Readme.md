@@ -38,7 +38,7 @@ Building on the original author's work, this fork adds features developed entire
 The addon icon was borrowed from [Aeon Nox 5: SiLVO](https://github.com/MikeSiLVO/Aeon-Nox-SiLVO) skin.
 
 
-##Known Issue or unresolved and(or) out of scope
+## Known Issue or unresolved and(or) out of scope
 - ** Network strm based Items in library view are missing metadata or read as "Startup" before the client cached or download additional metadata? 
 - ** Building views from TMDB Helper service was considered at one point and was rejected, might either be too complicated or not feasible directly from this side of plugin.
 - ** Some alternative play method was used to use plugin based url instead of direct vfs for gdrive/onedrive, usually either resulted in broken playback, or was at one point working but broke the resume point insertion feature. 
