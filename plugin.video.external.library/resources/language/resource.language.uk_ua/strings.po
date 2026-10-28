@@ -112,11 +112,11 @@ msgstr "Сезони"
 
 msgctxt "#32024"
 msgid "Playtime to start tracking progress (seconds)"
-msgstr "Час, після якого відстежується прогрес перегляду (сек.)"
+msgstr "Час, після якого відстежується прогрес і оновлюється дата останнього перегляду (сек.)"
 
 msgctxt "#32025"
 msgid "Playtime after which the plugin starts tracking playback progress."
-msgstr "Час відтворення, після якого додаток починає відстежувати прогрес."
+msgstr "Час відтворення, після якого додаток зберігає позицію і оновлює дату останнього перегляду."
 
 msgctxt "#32026"
 msgid "Playback percentage after which the plugin marks a played video as watched."
@@ -142,6 +142,69 @@ msgctxt "#32031"
 msgid "Updating the remote videolibrary started."
 msgstr "Почалося оновлення віддаленої медіатеки."
 
+msgctxt "#32032"
+msgid "Recently added TV shows"
+msgstr "Нещодавно додані серіали"
+
+msgctxt "#32033"
+msgid "Use a local copy of the remote library"
+msgstr "Використовувати локальну копію віддаленої медіатеки"
+
+msgctxt "#32034"
+msgid "Building the local library copy"
+msgstr "Створення локальної копії медіатеки"
+
+msgctxt "#32035"
+msgid "Unable to store a local copy of the remote library!"
+msgstr "Не вдалося зберегти локальну копію віддаленої медіатеки!"
+
+msgctxt "#32036"
+msgid "Unable to use the local copy of the remote library!"
+msgstr "Не вдалося використати локальну копію віддаленої медіатеки!"
+
+msgctxt "#32037"
+msgid "Smart Playlists"
+msgstr "Розумні списки відтворення"
+
+msgctxt "#32038"
+msgid "Paginate smart playlists"
+msgstr "Сторінками для розумних списків"
+
+msgctxt "#32039"
+msgid "Playlist items per page"
+msgstr "Елементів на сторінці списку"
+
+msgctxt "#32040"
+msgid "Pin to root menu"
+msgstr "Закріпити в головному меню"
+
+msgctxt "#32041"
+msgid "Unpin from root menu"
+msgstr "Відкріпити від головного меню"
+
+msgctxt "#32042"
+msgid "No playlists found on the remote Kodi host"
+msgstr "Списків відтворення не знайдено на віддаленому хості Kodi"
+
+msgctxt "#32043"
+msgid "Next page"
+msgstr "Наступна сторінка"
+
+msgctxt "#32044"
+msgid "Build local copy"
+msgstr "Створити локальну копію"
+
+msgctxt "#32045"
+msgid "The local library copy is up to date."
+msgstr "Локальна копія бібліотеки оновлена."
+
+msgctxt "#32046"
+msgid "Show full details from the local copy"
+msgstr "Показувати повну інформацію з локальної копії"
+
+msgctxt "#32047"
+msgid "Use the native library view (off: generic file view)"
+msgstr "Використовувати вбудований вигляд бібліотеки (вимк.: загальний вигляд файлів)"
 
 msgctxt "addon.xml:summary"
 msgid "Kodi external video library client"

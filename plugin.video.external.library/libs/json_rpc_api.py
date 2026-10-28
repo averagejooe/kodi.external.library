@@ -25,10 +25,27 @@ from libs.kodi_service import ADDON, get_remote_kodi_url
 
 logger = logging.getLogger(__name__)
 
+# Seconds to wait for the remote Kodi host before giving up. Without this a request to an
+# unreachable host can block for as long as the socket hangs - and it runs on Kodi's UI
+# thread, so that shows up as the whole interface freezing. A healthy reply takes well
+# under a second, so this is generous.
+REQUEST_TIMEOUT = 10
+
+# The every-open "what changed?" check uses a much shorter timeout. It runs on every list
+# open, and a dead host should cost a couple of seconds there, not ten. The stored copy is
+# shown either way, so giving up early only trades a small chance of a stale list for a
+# noticeably faster open while the remote host is offline.
+REACHABILITY_TIMEOUT = 3
+
+# Properties requested for a Files.GetDirectory listing. For a smart playlist the host returns
+# them per item, so a row can be built from this one call alone - no local mirror lookup.
+DIRECTORY_PROPERTIES = ['title', 'year', 'genre', 'plot', 'art', 'playcount']
+
 
 class BaseJsonRpcApi:
     kodi_url = get_remote_kodi_url(with_credentials=False)
     method: str
+    timeout = REQUEST_TIMEOUT
 
     def send_json_rpc(self):
         """
@@ -50,7 +67,7 @@ class BaseJsonRpcApi:
             auth = (login, password)
         try:
             json_reply = requests.post(self.kodi_url + '/jsonrpc', json=request,
-                                       auth=auth, verify=False).json()
+                                       auth=auth, verify=False, timeout=self.timeout).json()
         except requests.RequestException as exc:
             raise RemoteKodiError(self.kodi_url) from exc
         logger.debug('JSON-RPC reply: %s', pformat(json_reply))
@@ -61,9 +78,35 @@ class BaseJsonRpcApi:
         return None
 
 
+class PingRemote(BaseJsonRpcApi):
+    """Cheapest possible call, used only to check the remote host is reachable"""
+    method = 'JSONRPC.Ping'
+    timeout = REACHABILITY_TIMEOUT
+
+
+def remote_reachable() -> bool:
+    """
+    Whether the remote Kodi host answers
+
+    Unlike the list build, playback cannot fall back to the local copy, so this is checked
+    before handing a playable item to the player.
+    """
+    try:
+        PingRemote().send_json_rpc()
+        return True
+    except RemoteKodiError:
+        return False
+    except Exception:  # pylint: disable=broad-except
+        # An unexpected reply must not block playback that might otherwise work.
+        logger.exception('Unexpected reply while checking the remote Kodi host')
+        return True
+
+
 class BaseMediaItemsRetriever(BaseJsonRpcApi):
     properties: List[str]
-    sort = Dict[str, str]
+    sort: Optional[Dict[str, str]] = None
+    item_limit: Optional[int] = None
+    item_start = 0
 
     def __init__(self, content, tvshowid=None, season=None):
         self._content = content
@@ -71,10 +114,18 @@ class BaseMediaItemsRetriever(BaseJsonRpcApi):
         self._season = season
 
     def get_params(self) -> Dict[str, Any]:
-        params = {
-            'properties': self.properties,
-            'sort': self.sort,
-        }
+        params: Dict[str, Any] = {}
+        if self.properties:
+            params['properties'] = self.properties
+        if self.sort is not None:
+            params['sort'] = self.sort
+        if self.item_limit is not None:
+            # Only ever used to chunk the initial mirror build over the transport.
+            # It is not pagination: the list is presented as one single directory.
+            params['limits'] = {
+                'start': self.item_start,
+                'end': self.item_start + self.item_limit,
+            }
         if self._tvshowid is not None:
             params['tvshowid'] = self._tvshowid
         if self._season is not None:
@@ -96,6 +147,13 @@ class BaseMediaItemsRetriever(BaseJsonRpcApi):
 
 class GetMovies(BaseMediaItemsRetriever):
     method = 'VideoLibrary.GetMovies'
+    # DECISION: 'cast' is deliberately NOT requested. It is the dominant per-item cost
+    # (20-50 actors, each with a thumbnail URL that has to be escaped and turned into an
+    # xbmc.Actor object) and it is not shown in the list or grid view - only in the Movie
+    # Information popup. Dropping it makes the mirror build and the per-open sync smaller
+    # and faster. 'streamdetails' IS kept because it drives the media badges (codec /
+    # resolution / audio) in that same popup. Lazy-loading the cast only when the info
+    # popup is opened is a possible future improvement; it is not implemented.
     properties = [
         'title',
         'genre',
@@ -111,7 +169,6 @@ class GetMovies(BaseMediaItemsRetriever):
         'writer',
         'studio',
         'mpaa',
-        'cast',
         'country',
         'streamdetails',
         'top250',
@@ -120,10 +177,21 @@ class GetMovies(BaseMediaItemsRetriever):
         'sorttitle',
         'resume',
         'dateadded',
+        'lastplayed',
         'art',
         'premiered',
     ]
     sort = {'order': 'ascending', 'method': 'label'}
+
+    @classmethod
+    def get_light(cls):
+        """The cheap retriever used for the every-open "what changed?" check"""
+        return GetMoviesLight('movies')
+
+    @classmethod
+    def get_item_details(cls, item_id):
+        """The retriever for one full item, used only for items new to the local mirror"""
+        return GetMovieDetails(item_id)
 
 
 class GetRecentlyAddedMovies(GetMovies):
@@ -133,6 +201,7 @@ class GetRecentlyAddedMovies(GetMovies):
 
 class GetTVShows(BaseMediaItemsRetriever):
     method = 'VideoLibrary.GetTVShows'
+    # DECISION: 'cast' is deliberately NOT requested here either - see the note on GetMovies.
     properties = [
         'title',
         'genre',
@@ -141,7 +210,6 @@ class GetTVShows(BaseMediaItemsRetriever):
         'plot',
         'studio',
         'mpaa',
-        'cast',
         'episode',
         'playcount',
         'premiered',
@@ -152,6 +220,7 @@ class GetTVShows(BaseMediaItemsRetriever):
         'season',
         'watchedepisodes',
         'dateadded',
+        'lastplayed',
         'tag',
         'art',
         'userrating',
@@ -160,6 +229,95 @@ class GetTVShows(BaseMediaItemsRetriever):
         'uniqueid',
     ]
     sort = {'order': 'ascending', 'method': 'label'}
+
+    @classmethod
+    def get_light(cls):
+        """The cheap retriever used for the every-open "what changed?" check"""
+        return GetTVShowsLight('tvshows')
+
+    @classmethod
+    def get_item_details(cls, item_id):
+        """The retriever for one full item, used only for items new to the local mirror"""
+        return GetTVShowDetails(item_id)
+
+
+class GetRecentlyAddedTVShows(GetTVShows):
+    item_limit = 25
+    sort = {'order': 'descending', 'method': 'dateadded'}
+
+
+# The properties below are the ones the mirror has to refresh from the remote on every
+# open. They are cheap compared to a full item, so the "what changed?" check stays small.
+# Everything else is fetched once, when an item is first stored.
+# 'file' is not here to be refreshed: it identifies. A deleted id can be handed to a
+# different item, so the mirror compares this path with the stored one to tell a genuine
+# refresh from a reused id (see MirrorStore._same_item).
+_MOVIE_VOLATILE_PROPERTIES = ['playcount', 'resume', 'lastplayed', 'dateadded', 'file']
+# 'resume' is a playable-item property: Video.Fields.TVShow does not accept it, and a
+# request that includes it is rejected with InvalidParams (the reply then carries no
+# 'result', which the retriever reports as "unable to retrieve tvshows"). Movies are
+# playable and may ask for it; tvshows must not.
+_TVSHOW_VOLATILE_PROPERTIES = [
+    'playcount', 'lastplayed', 'dateadded', 'episode', 'season', 'watchedepisodes',
+    'file',  # identifies, not refreshed - see the note above
+]
+
+
+class GetMoviesLight(GetMovies):
+    """Movie ids plus the fields that must be re-read from the remote on every open"""
+    properties = _MOVIE_VOLATILE_PROPERTIES
+    # The volatile properties are all server-side, so let the remote do the ordering.
+    sort = {'order': 'ascending', 'method': 'label'}
+    timeout = REACHABILITY_TIMEOUT
+
+
+class GetTVShowsLight(GetTVShows):
+    """TV show ids plus the fields that must be re-read from the remote on every open"""
+    properties = _TVSHOW_VOLATILE_PROPERTIES
+    sort = {'order': 'ascending', 'method': 'label'}
+    timeout = REACHABILITY_TIMEOUT
+
+
+class BaseItemDetailsRetriever(BaseJsonRpcApi):
+    """Fetch one fully detailed item, used only for items new to the local mirror"""
+
+    method: str
+    properties: List[str]
+    result_key: str
+    id_param: str
+
+    def __init__(self, item_id):
+        super().__init__()
+        self._item_id = item_id
+
+    def get_params(self) -> Dict[str, Any]:
+        return {
+            self.id_param: self._item_id,
+            'properties': self.properties,
+        }
+
+    def get_item(self) -> Dict[str, Any]:
+        reply = self.send_json_rpc()
+        try:
+            return reply['result'][self.result_key]
+        except KeyError as exc:
+            raise NoDataError(
+                f'Unable to retrieve {self.id_param} {self._item_id} from remote media library'
+            ) from exc
+
+
+class GetMovieDetails(BaseItemDetailsRetriever):
+    method = 'VideoLibrary.GetMovieDetails'
+    result_key = 'moviedetails'
+    id_param = 'movieid'
+    properties = GetMovies.properties
+
+
+class GetTVShowDetails(BaseItemDetailsRetriever):
+    method = 'VideoLibrary.GetTVShowDetails'
+    result_key = 'tvshowdetails'
+    id_param = 'tvshowid'
+    properties = GetTVShows.properties
 
 
 class GetSeasons(BaseMediaItemsRetriever):
@@ -200,6 +358,7 @@ class GetEpisodes(BaseMediaItemsRetriever):
         'resume',
         'tvshowid',
         'dateadded',
+        'lastplayed',
         'uniqueid',
         'art',
         'specialsortseason',
@@ -268,6 +427,41 @@ class VideoLibraryScan(BaseJsonRpcApi):
     method = 'VideoLibrary.Scan'
 
 
+class GetDirectory(BaseJsonRpcApi):
+    """
+    Read a directory on the remote Kodi host
+
+    Used for smart playlists: the playlists folder is a directory of ``.xsp`` files, and one
+    ``.xsp`` path is itself a directory of the items its rules matched. ``media`` must be
+    ``video`` or the host returns an empty list for a playlist.
+    """
+
+    method = 'Files.GetDirectory'
+
+    def __init__(self, directory):
+        super().__init__()
+        self._directory = directory
+
+    def get_params(self) -> Dict[str, Any]:
+        return {
+            'directory': self._directory,
+            'media': 'video',
+            'properties': DIRECTORY_PROPERTIES,
+        }
+
+    def get_files(self) -> List[Dict[str, Any]]:
+        """
+        The entries of this directory
+
+        :raises: NoDataError when the host does not return a usable directory listing
+        """
+        try:
+            return self.send_json_rpc()['result']['files'] or []
+        except (KeyError, TypeError) as exc:
+            raise NoDataError(
+                f'Unable to read {self._directory} on the remote Kodi host') from exc
+
+
 SET_DETAILS_API_MAP = {
     'movieid': SetMovieDetails,
     'episodeid': SetEpisodeDetails,
@@ -289,3 +483,14 @@ def update_resume(item_id_param, item_id, position, total):
     api_class = SET_DETAILS_API_MAP[item_id_param]
     api = api_class()
     api.set_details(**{item_id_param: item_id, 'resume': {'position': position, 'total': total}})
+
+
+def update_lastplayed_and_resume(item_id_param, item_id, playcount, resume, lastplayed):
+    api_class = SET_DETAILS_API_MAP[item_id_param]
+    api = api_class()
+    api.set_details(**{
+        item_id_param: item_id,
+        'playcount': playcount,
+        'lastplayed': lastplayed,
+        'resume': resume,
+    })

@@ -27,6 +27,7 @@ __all__ = [
     'MoviesHandler',
     'RecentMoviesHandler',
     'TvShowsHandler',
+    'RecentTvShowsHandler',
     'SeasonsHandler',
     'EpisodesHandler',
     'RecentEpisodesHandler',
@@ -45,6 +46,11 @@ class BaseContentTypeHandler:
     mediatype: str
     item_is_folder: bool
     should_save_to_mem_storage: bool = False
+    # When True the list is served from a local copy of the remote library
+    mirrored: bool = False
+    # Whether the remote host answered when the list was built. Set by the list code after
+    # the fetch; playback uses it to decide whether the host needs an offline check.
+    host_reachable: bool = True
     api_class: Type[json_rpc_api.BaseMediaItemsRetriever]
 
     def __init__(self, tvshowid: Optional[int] = None,
@@ -71,6 +77,13 @@ class BaseContentTypeHandler:
     def get_item_context_menu(self, media_info: Dict[str, Any]) -> List[Tuple[str, str]]:
         return []
 
+    def should_show(self, media_info: Dict[str, Any]) -> bool:
+        """Whether an item belongs in this listing
+
+        Applied when reading from the local copy, where the listing is stored unfiltered.
+        """
+        return True
+
     def get_sort_methods(self) -> List[int]:
         return [
             xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,
@@ -83,12 +96,15 @@ class BaseContentTypeHandler:
             xbmcplugin.SORT_METHOD_GENRE,
             xbmcplugin.SORT_METHOD_MPAA_RATING,
             xbmcplugin.SORT_METHOD_PLAYCOUNT,
+            xbmcplugin.SORT_METHOD_DATEADDED,
+            xbmcplugin.SORT_METHOD_LASTPLAYED,
         ]
 
 
 class PlayableContentMixin:
     item_is_folder = False
     should_save_to_mem_storage = True
+    host_reachable = True
 
     def get_item_context_menu(self, media_info: Dict[str, Any]) -> List[Tuple[str, str]]:
         if media_info['playcount']:
@@ -106,11 +122,19 @@ class PlayableContentMixin:
     def get_item_url(self, media_info: Dict[str, Any]) -> str:
         if ADDON.getSettingBool('files_on_shares'):
             return media_info['file']
+        # This is the item's play target (the URL in the directory tuple), so it is where
+        # playback routing must be set. While the remote host is down the list came from the
+        # local copy, and playback is routed through the plugin so it can check the host and
+        # notify instead of freezing the player on an unreachable URL. When the host is up the
+        # item keeps its plain direct URL, the long-standing playback path.
+        if not self.host_reachable:
+            return get_plugin_url(action='play', file=media_info['file'])
         return f'{VIDEO_URL}/{quote(media_info["file"])}'
 
 
 class MoviesHandler(PlayableContentMixin, BaseContentTypeHandler):
     mediatype = 'movie'
+    mirrored = True
     api_class = json_rpc_api.GetMovies
 
     def get_plugin_category(self) -> str:
@@ -119,6 +143,8 @@ class MoviesHandler(PlayableContentMixin, BaseContentTypeHandler):
 
 class RecentMoviesHandler(MoviesHandler):
     api_class = json_rpc_api.GetRecentlyAddedMovies
+    # A recent list is remote-capped and pre-sorted; mirroring it would be wrong.
+    mirrored = False
 
     def get_plugin_category(self) -> str:
         return _('Recently added movies')
@@ -130,6 +156,7 @@ class RecentMoviesHandler(MoviesHandler):
 class TvShowsHandler(BaseContentTypeHandler):
     mediatype = 'tvshow'
     item_is_folder = True
+    mirrored = True
     api_class = json_rpc_api.GetTVShows
 
     class FlattenSeasons(enum.IntEnum):
@@ -145,6 +172,16 @@ class TvShowsHandler(BaseContentTypeHandler):
             if media_item['episode']:
                 yield media_item
 
+    def should_show(self, media_info: Dict[str, Any]) -> bool:
+        """Whether an item belongs in this listing
+
+        The local copy stores every show unfiltered, so this same rule is applied when
+        reading from the mirror. Without it a zero-episode show would be filtered out of
+        the listing but still counted as present locally, and every open would try to
+        re-add it.
+        """
+        return bool(media_info.get('episode'))
+
     def get_item_url(self, media_info: Dict[str, Any]) -> str:
         parent_category = media_info.get('title') or media_info['label']
         tvshowid = media_info['tvshowid']
@@ -157,6 +194,18 @@ class TvShowsHandler(BaseContentTypeHandler):
                                       parent_category=parent_category)
         return get_plugin_url(content_type='seasons', tvshowid=tvshowid,
                               parent_category=parent_category)
+
+
+class RecentTvShowsHandler(TvShowsHandler):
+    api_class = json_rpc_api.GetRecentlyAddedTVShows
+    # A recent list is capped and pre-sorted; mirroring it would be wrong.
+    mirrored = False
+
+    def get_plugin_category(self) -> str:
+        return _('Recently added TV shows')
+
+    def get_sort_methods(self) -> List[int]:
+        return []
 
 
 class SeasonsHandler(BaseContentTypeHandler):
@@ -187,6 +236,11 @@ class EpisodesHandler(PlayableContentMixin, BaseContentTypeHandler):
 
     def get_plugin_category(self) -> str:
         return self._parent_category
+
+    def get_item_url(self, media_info: Dict[str, Any]) -> str:
+        if ADDON.getSettingBool('files_on_shares'):
+            return media_info['file']
+        return f'{VIDEO_URL}/{quote(media_info["file"])}'
 
     def get_sort_methods(self) -> List[int]:
         return [

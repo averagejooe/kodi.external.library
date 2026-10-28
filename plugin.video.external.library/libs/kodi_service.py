@@ -33,7 +33,6 @@ ADDON_NAME = ADDON.getAddonInfo('name')
 ADDON_VERSION = ADDON.getAddonInfo('version')
 
 ADDON_DIR = Path(translatePath(ADDON.getAddonInfo('path')))
-ADDON_ICON = Path(translatePath(ADDON.getAddonInfo('icon')))
 ADDON_PROFILE_DIR = Path(translatePath(ADDON.getAddonInfo('profile')))
 
 PLUGIN_URL = f'plugin://{ADDON_ID}/'

@@ -65,6 +65,11 @@
           <default>true</default>
           <control type="toggle"/>
         </setting>
+        <setting id="show_recent_tvshows" type="boolean" label="32032" help="">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
         <setting id="show_recent_episodes" type="boolean" label="32006" help="">
           <level>0</level>
           <default>true</default>
@@ -88,6 +93,36 @@
           <control type="toggle"/>
         </setting>
         <setting id="show_recent_music_videos" type="boolean" label="32028" help="">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
+        <setting id="mirror_lists" type="boolean" label="32033" help="">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
+        <setting id="playlist_paging" type="boolean" label="32038" help="">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
+        <setting id="playlist_page_size" type="integer" label="32039" help="">
+          <level>0</level>
+          <default>30</default>
+          <constraints>
+            <minimum>30</minimum>
+            <step>20</step>
+            <maximum>150</maximum>
+          </constraints>
+          <control type="spinner" format="integer"/>
+        </setting>
+        <setting id="playlist_metadata" type="boolean" label="32046" help="">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
+        <setting id="native_library_view" type="boolean" label="32047" help="">
           <level>0</level>
           <default>true</default>
           <control type="toggle"/>

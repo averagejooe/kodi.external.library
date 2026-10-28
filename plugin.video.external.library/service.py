@@ -16,6 +16,16 @@
 import logging
 
 import xbmc
+import xbmcaddon
+
+# TEMP DIAGNOSTIC (1.1.18): proves Kodi actually executes this file. WARNING level so it is
+# written even with debug logging off, and only Kodi's own modules are imported above it, so it
+# still prints if a later addon import is what fails. The version is stamped in (1.1.24) because
+# two different builds were both shipped as 1.1.23, so which one was installed could not be told
+# apart; this line now proves the running build at a glance. Revert together with addon.xml's
+# reuselanguageinvoker change (see snapshot pre-service-diagnostic-1.1.18).
+xbmc.log(f'ELIB DIAG: service.py executed version={xbmcaddon.Addon().getAddonInfo("version")}',
+         level=xbmc.LOGWARNING)
 
 from libs.exception_logger import catch_exception
 from libs.kodi_service import initialize_logging
@@ -29,8 +39,9 @@ with catch_exception():
     kodi_monitor = xbmc.Monitor()
     play_monitor = PlayMonitor()
     while not kodi_monitor.waitForAbort(1.0):
-        if (play_monitor.isPlayingVideo()
-                and not xbmc.getCondVisibility('Player.Paused')
-                and play_monitor.is_monitoring):
-            play_monitor.update_time()
+        if play_monitor.isPlayingVideo():
+            if not play_monitor.is_monitoring:
+                play_monitor.retry_pending_match()
+            elif not xbmc.getCondVisibility('Player.Paused'):
+                play_monitor.update_time()
 logger.debug('Stopped playback monitoring service.')

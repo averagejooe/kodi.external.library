@@ -94,3 +94,10 @@ ENV/
 .idea/
 *.zip
 *.bat
+
+# Local working notes, agent state and build output
+Notes Archive/
+claude-handoff/
+.claude/
+dist/
+screenshots/JSONGETITEMTEST.jpg

@@ -105,11 +105,11 @@ msgstr ""
 
 msgctxt "#32024"
 msgid "Playtime to start tracking progress (seconds)"
-msgstr ""
+msgstr "Playtime to start tracking progress and refresh last played (seconds)"
 
 msgctxt "#32025"
 msgid "Playtime after which the plugin starts tracking playback progress."
-msgstr ""
+msgstr "Playtime after which the plugin saves resume data and refreshes last played."
 
 msgctxt "#32026"
 msgid "Playback percentage after which the plugin marks a played video as watched."
@@ -133,6 +133,70 @@ msgstr ""
 
 msgctxt "#32031"
 msgid "Updating the remote videolibrary started."
+msgstr ""
+
+msgctxt "#32032"
+msgid "Recently added TV shows"
+msgstr ""
+
+msgctxt "#32033"
+msgid "Use a local copy of the remote library"
+msgstr ""
+
+msgctxt "#32034"
+msgid "Building the local library copy"
+msgstr ""
+
+msgctxt "#32035"
+msgid "Unable to store a local copy of the remote library!"
+msgstr ""
+
+msgctxt "#32036"
+msgid "Unable to use the local copy of the remote library!"
+msgstr ""
+
+msgctxt "#32037"
+msgid "Smart Playlists"
+msgstr ""
+
+msgctxt "#32038"
+msgid "Paginate smart playlists"
+msgstr ""
+
+msgctxt "#32039"
+msgid "Playlist items per page"
+msgstr ""
+
+msgctxt "#32040"
+msgid "Pin to root menu"
+msgstr ""
+
+msgctxt "#32041"
+msgid "Unpin from root menu"
+msgstr ""
+
+msgctxt "#32042"
+msgid "No playlists found on the remote Kodi host"
+msgstr ""
+
+msgctxt "#32043"
+msgid "Next page"
+msgstr ""
+
+msgctxt "#32044"
+msgid "Build local copy"
+msgstr ""
+
+msgctxt "#32045"
+msgid "The local library copy is up to date."
+msgstr ""
+
+msgctxt "#32046"
+msgid "Show full details from the local copy"
+msgstr ""
+
+msgctxt "#32047"
+msgid "Use the native library view (off: generic file view)"
 msgstr ""
 
 

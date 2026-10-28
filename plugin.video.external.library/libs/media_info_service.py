@@ -129,7 +129,7 @@ class AudioStreamSetter(VideoStreamSetter):
     stream_type_class = xbmc.AudioStreamDetail
 
     @staticmethod
-    def get_stream_type_args(stream_dict: Dict[str, Any]) -> Iterable[Any]:
+    def get_stream_type_args(stream_dict: Dict[str, Any]) -> Iterable[Any,]:
         return (
             stream_dict['channels'],
             stream_dict['codec'],
@@ -142,7 +142,7 @@ class SubtitleStreamSetter(VideoStreamSetter):
     stream_type_class = xbmc.SubtitleStreamDetail
 
     @staticmethod
-    def get_stream_type_args(stream_dict: Dict[str, Any]) -> Iterable[Any]:
+    def get_stream_type_args(stream_dict: Dict[str, Any]) -> Iterable[Any,]:
         return (stream_dict['language'],)
 
 
@@ -192,6 +192,7 @@ MEDIA_PROPERTIES: List[Tuple[str, str, Type[SimpleMediaPropertySetter]]] = [
     ('sorttitle', 'setSortTitle', SimpleMediaPropertySetter),
     ('resume', 'setResumePoint', ResumePointSetter),
     ('dateadded', 'setDateAdded', SimpleMediaPropertySetter),
+    ('lastplayed', 'setLastPlayed', SimpleMediaPropertySetter),
     ('premiered', 'setPremiered', SimpleMediaPropertySetter),
     ('season', 'setSeason', SimpleMediaPropertySetter),
     ('episode', 'setEpisode', SimpleMediaPropertySetter),
