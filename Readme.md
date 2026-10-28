@@ -3,14 +3,20 @@
 [![Check addon](https://github.com/romanvm/kodi.external.library/actions/workflows/check-addon.yml/badge.svg)](https://github.com/romanvm/kodi.external.library/actions/workflows/check-addon.yml)
 
 This addon allows to browse and play videofiles from a medialibrary on a remote Kodi instance with syncing playback status.
-Building on the original author's work, this fork adds features developed entirely through AI-assisted “vibe coding,” alongside smaller refinements aimed at making browsing faster and the experience feel as native to Kodi as possible — particularly on lower-powered devices like the Fire TV Stick 4K. The library listing and playback workflow have also been tested with Google Drive and OneDrive add-ons to help ensure compatibility with cloud-hosted media.
+
+## Motivation
+Low-powered mini PCs are really nifty as media servers, and with the help of streaming technologies like Parsec/Moonlight, they can run a perfectly fine Kodi server and stream to other clients on the LAN... up to a certain point, before the device gives up and suffers from thermal throttling and overheating, despite dedicated external cooling measures. The solution is ez, just buy better hardware! Then you get slapped by how much RAM and storage costs nowadays. Ouch!
+
+Just when I thought I'd hit a wall, I stumbled upon Kodi's external library add-on, which opened up a more practical way to browse and stream media across devices without relying so heavily on the server's hardware.
+
+Building on the original author's work, this fork adds features developed entirely through AI-assisted “vibe coding,” alongside smaller refinements aimed at making browsing faster and the experience feel as native to Kodi as possible, especially on lower-powered devices like the Fire TV Stick 4K. The library listing and playback workflow have also been tested with Google Drive and OneDrive add-ons for cloud-hosted media.
 
 ## Features
 
-### Fast Browsing
-- **Fast local browsing** — Browse Movies and TV Shows from a local library copy, reducing repeated network requests to the remote Kodi host.
-- **Recently Added TV Shows** — Quickly access recently added TV shows from a dedicated menu entry.
-- **On-demand library building** — Build the local library copy directly from the Movies or TV Shows menu when needed.
+### Fast(er) Browsing
+- **Fast(er) local browsing** — Browse Movies and TV Shows from a local library copy, reducing repeated network requests to the remote Kodi host.
+- **Recently Added TV Shows** — Added the menu to quickly access recently added TV shows from a dedicated menu entry.
+- **On-demand library building** — Build the local library copy directly from the Movies or TV Shows menu without opening the list (for case for 5000 library items or something)
 
 ### Smart Playlists
 - **Remote Smart Playlists** — Browse and open Smart Playlists from your remote Kodi library.
@@ -30,6 +36,12 @@ Building on the original author's work, this fork adds features developed entire
 ## Credits
 
 The addon icon was borrowed from [Aeon Nox 5: SiLVO](https://github.com/MikeSiLVO/Aeon-Nox-SiLVO) skin.
+
+
+##Known Issue or unresolved and(or) out of scope
+- ** Network strm based Items in library view are missing metadata or read as "Startup" before the client cached or download additional metadata? 
+- ** Building views from TMDB Helper service was considered at one point and was rejected, might either be too complicated or not feasible directly from this side of plugin.
+- ** Some alternative play method was used to use plugin based url instead of direct vfs for gdrive/onedrive, usually either resulted in broken playback, or was at one point working but broke the resume point insertion feature. 
 
 ## License
 This project retains the GNU General Public License v3.0 (GPL-3.0). See LICENSE for the full license text.
